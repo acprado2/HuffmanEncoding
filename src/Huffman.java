@@ -69,7 +69,7 @@ public class Huffman
 		for ( int i =0; i < 4; i++ )
 		{
 			bits[i] = ft[i].get();
-			out.write( bits[i].toByteArray() );;
+			out.write( bits[i].toByteArray() );
 		}
 		
 		out.close();
@@ -132,27 +132,27 @@ class HuffmanTree
 	}
 	
 	// Create our code table
-	public void BuildCodeTable()
+	public void BuildCodeTable() throws Exception
 	{
-		// Inorder traversal
-		inOrder( root, "" );
-	}
-	
-	private void inOrder( HuffmanNode current, String code )
-	{
-		if ( current != null )
+		if ( root.getWord() != '\0' )
 		{
-			inOrder( current.getLeft(), code + "0" );
-			
-			if ( current.getWord() != '\0' )
-			{
-				huffmanCodes.put( current.getWord(), code );
-			}
-			
-			inOrder( current.getRight(), code + "1" );		
+			huffmanCodes.put( root.getWord(), "" );
 		}
+		
+		// Traverse both sides of the tree
+		FutureTask<Map<Character, String>> ft1 = new FutureTask<>( new TraverseThread( root.getLeft(), "0" ) );
+		FutureTask<Map<Character, String>> ft2 = new FutureTask<>( new TraverseThread( root.getRight(), "1" ) );
+		Thread t1 = new Thread( ft1 );
+		Thread t2 = new Thread( ft2 );
+		t1.start();
+		t2.start();
+		
+		// Store codes
+		huffmanCodes.putAll( ft1.get() );
+		huffmanCodes.putAll( ft2.get() );
+
 	}
-	
+
 	// Convert hashmap to tree structure
 	public void CreateTree( Map<Character, Integer> dictionary )
 	{
@@ -273,5 +273,41 @@ class EncodeThread implements Callable<BitSet>
 		}
 		
 		return b;
+	}
+}
+
+class TraverseThread implements Callable<Map<Character, String>>
+{
+	HuffmanNode root;
+	String strCode;
+	Map<Character, String> codes;
+	
+	public TraverseThread( HuffmanNode root, String strCode )
+	{
+		this.root = root;
+		this.strCode = strCode;
+		codes = new HashMap<>();
+	}
+	
+	public Map<Character, String> call()
+	{
+		inOrder( root, strCode );
+		
+		return codes;
+	}
+	
+	private void inOrder( HuffmanNode current, String code )
+	{
+		if ( current != null )
+		{
+			inOrder( current.getLeft(), code + "0" );
+			
+			if ( current.getWord() != '\0' )
+			{
+				codes.put( current.getWord(), code );
+			}
+			
+			inOrder( current.getRight(), code + "1" );		
+		}
 	}
 }
