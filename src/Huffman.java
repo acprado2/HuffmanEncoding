@@ -4,10 +4,8 @@
 //
 //-----------------------------------------------------------------------------
 
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,6 +13,7 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.io.File;
 
@@ -75,7 +74,7 @@ public class Huffman
 					}
 					
 					// Set bit
-					b |= ( code.charAt( j ) == '0' ) ? 0 << j : 1 << j;
+					b |= ( code.charAt( j ) == '0' ) ? 0 << count : 1 << count;
 					count++;
 				}
 			}
