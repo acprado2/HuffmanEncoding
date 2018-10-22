@@ -13,6 +13,8 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.FutureTask;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.io.File;
@@ -37,9 +39,9 @@ public class Huffman
 		}
 		
 		// Wait for threads
-		for ( int i = 0; i < 4; i++ )
+		for ( Thread thread : t )
 		{
-			t[i].join();
+			thread.join();
 		}
 				
 		HuffmanTree tree = new HuffmanTree();
@@ -53,32 +55,23 @@ public class Huffman
 		// Begin encoding
 		FileOutputStream out = new FileOutputStream( "const_encoded.txt" );
 		
-		// Store in bytes
-		byte b = 0x00;
-		int count = 0;
-		
-		for ( int i = 0; i < strFile.length(); i++ )
-		{	
-			String code = tree.getCode( strFile.charAt( i ) );
-			if ( code != null )
-			{
-				for ( int j = 0; j < code.length(); j++ )
-				{
-					// Check if we've filled a byte
-					if ( count > 7 )
-					{
-						// Write the byte
-						out.write( new byte[]{b} );
-						b = 0x00;
-						count = 0;
-					}
-					
-					// Set bit
-					b |= ( code.charAt( j ) == '0' ) ? 0 << count : 1 << count;
-					count++;
-				}
-			}
+		// Create threads;
+		FutureTask<BitSet> ft[] = new FutureTask[4];
+		for ( int i = 0; i < 4; i++ )
+		{
+			ft[i] = new FutureTask<>( new EncodeThread( strFile.substring( i * ( strFile.length() / 4 ), ( i + 1 ) * ( strFile.length() / 4 ) ), tree ) );
+			t[i] = new Thread( ft[i] );
+			t[i].start();
 		}
+		
+		// Store bits
+		BitSet bits[] = new BitSet[4];
+		for ( int i =0; i < 4; i++ )
+		{
+			bits[i] = ft[i].get();
+			out.write( bits[i].toByteArray() );;
+		}
+		
 		out.close();
 		
 		endTime = System.nanoTime();
@@ -213,12 +206,12 @@ class HuffmanNode
 		this.right = null;
 	}
 	
-	public void			setWord( Character word ) 			{ this.word = word; }
+	public void			setWord( Character word ) 		{ this.word = word; }
 	public void			setCount( int count ) 			{ this.count = count; }
 	public void			setLeft( HuffmanNode left ) 	{ this.left = left; }
 	public void			setRight( HuffmanNode right ) 	{ this.right = right; }
 
-	public Character 		getWord() 	{ return word; }
+	public Character 	getWord() 	{ return word; }
 	public int	 	   	getCount() 	{ return count; }
 	public HuffmanNode 	getLeft() 	{ return left; }
 	public HuffmanNode 	getRight() 	{ return right; }
@@ -245,5 +238,40 @@ class ParseThread implements Runnable
 				dictionary.merge( partition.charAt( i ), 1, Integer::sum );
 			}
 		}
+	}
+}
+
+class EncodeThread implements Callable<BitSet>
+{
+	private String partition;
+	private HuffmanTree tree;
+	
+	public EncodeThread( String partition, HuffmanTree tree )
+	{
+		this.partition = partition;
+		this.tree = tree;
+	}
+	
+	public BitSet call()
+	{
+		// Store in bytes
+		BitSet b = new BitSet();
+		int bitCount = 0;
+		
+		for ( int i = 0; i < partition.length(); i++ )
+		{	
+			String code = tree.getCode( partition.charAt( i ) );
+			if ( code != null )
+			{
+				for ( int j = 0; j < code.length(); j++ )
+				{					
+					// Set bit
+					b.set( bitCount, code.charAt( j ) == '1'  ? true : false );
+					bitCount++;
+				}
+			}
+		}
+		
+		return b;
 	}
 }

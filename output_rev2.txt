@@ -1,0 +1,23 @@
+Time to build tree: 0.084589715sec
+Time to encode: 0.016285787sec
+Encoded file is %43.272804 More compressed
+
+Time to build tree: 0.075816624sec
+Time to encode: 0.013399068sec
+Encoded file is %43.272804 More compressed
+
+Time to build tree: 0.082003265sec
+Time to encode: 0.014361308sec
+Encoded file is %43.272804 More compressed
+
+Time to build tree: 0.076728266sec
+Time to encode: 0.016468296sec
+Encoded file is %43.272804 More compressed
+
+Time to build tree: 0.078948494sec
+Time to encode: 0.016355659sec
+Encoded file is %43.272804 More compressed
+
+Time to build tree: 0.076277414sec
+Time to encode: 0.01566658sec
+Encoded file is %43.272804 More compressed

@@ -2,3 +2,9 @@
 /ParseThread.class
 /Huffman.class
 /EncodeThread.class
+/Huffman$EncodeThread.class
+/Huffman$HuffmanNode.class
+/Huffman$HuffmanTree.class
+/Huffman$ParseThread.class
+/HuffmanNode.class
+/HuffmanTree.class
