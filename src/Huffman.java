@@ -52,40 +52,34 @@ public class Huffman
 		startTime = System.nanoTime(); // Time encoding
 		
 		// Begin encoding
-		String currentLine = new String();
-		BufferedReader br = new BufferedReader( new FileReader( "const.txt" ) );	
 		FileOutputStream out = new FileOutputStream( "const_encoded.txt" );
 		
 		// Store in bytes
 		byte b = 0x00;
 		int count = 0;
 		
-		while ( ( currentLine = br.readLine() ) != null )
-		{
-			for ( int i = 0; i < currentLine.length(); i++ )
-			{	
-				String code = tree.getCode( currentLine.charAt( i ) );
-				if ( code != null )
+		for ( int i = 0; i < strFile.length(); i++ )
+		{	
+			String code = tree.getCode( strFile.charAt( i ) );
+			if ( code != null )
+			{
+				for ( int j = 0; j < code.length(); j++ )
 				{
-					for ( int j = 0; j < code.length(); j++ )
+					// Check if we've filled a byte
+					if ( count > 7 )
 					{
-						// Check if we've filled a byte
-						if ( count > 7 )
-						{
-							// Write the byte
-							out.write( new byte[]{b} );
-							b = 0x00;
-							count = 0;
-						}
-						
-						// Set bit
-						b |= ( code.charAt( j ) == '0' ) ? 0 << j : 1 << j;
-						count++;
+						// Write the byte
+						out.write( new byte[]{b} );
+						b = 0x00;
+						count = 0;
 					}
+					
+					// Set bit
+					b |= ( code.charAt( j ) == '0' ) ? 0 << j : 1 << j;
+					count++;
 				}
 			}
 		}
-		br.close();
 		out.close();
 		
 		endTime = System.nanoTime();
