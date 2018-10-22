@@ -10,31 +10,39 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.HashMap;
 import java.io.File;
 
-public class HuffmanSingleThreaded 
+public class Huffman 
 {
 	public static void main( String args[] ) throws Exception
 	{	
 		long startTime = System.nanoTime();	// Time tree building
 	
 		Map<Character, Integer> dict = new HashMap<>();
-		String currentLine = new String();
-		BufferedReader br = new BufferedReader( new FileReader( "const.txt" ) );	
-		while ( ( currentLine = br.readLine() ) != null )
-		{
-			for ( int i = 0; i < currentLine.length(); i++ )
-			{
-					// Add or increment table values
-					dict.merge( currentLine.charAt( i ), 1, Integer::sum );
-			}
-		}
-		br.close();
 		
+		// Parse file
+		String strFile = new String( Files.readAllBytes( Paths.get( "const.txt" ) ) );
+		
+		// Create threads;
+		Thread t[] = new Thread[4];
+		for ( int i = 0; i < 4; i++ )
+		{
+			t[i] = new Thread( new ParseThread( dict, strFile.substring( i * ( strFile.length() / 4 ), ( i + 1 ) * ( strFile.length() / 4 ) ) ) );
+			t[i].start();
+		}
+		
+		// Wait for threads
+		for ( int i = 0; i < 4; i++ )
+		{
+			t[i].join();
+		}
+				
 		HuffmanTree tree = new HuffmanTree();
 		tree.CreateTree( dict );
 		tree.BuildCodeTable();
@@ -44,7 +52,8 @@ public class HuffmanSingleThreaded
 		startTime = System.nanoTime(); // Time encoding
 		
 		// Begin encoding
-		br = new BufferedReader( new FileReader( "const.txt" ) );
+		String currentLine = new String();
+		BufferedReader br = new BufferedReader( new FileReader( "const.txt" ) );	
 		FileOutputStream out = new FileOutputStream( "const_encoded.txt" );
 		
 		// Store in bytes
@@ -88,7 +97,7 @@ public class HuffmanSingleThreaded
 		f = new File( "const_encoded.txt" );
 		
 		// Print compression
-		System.out.println( "Encoded file is " + ( 100 - ( ( 100 / ( double ) fileSize ) * ( double ) f.length() ) ) + " More compressed" );
+		System.out.println( "Encoded file is %" + ( 100 - ( ( 100 / ( float ) fileSize ) * ( float ) f.length() ) ) + " More compressed" );
 		
 		tree.StoreCodeTable();
 		
@@ -220,4 +229,28 @@ class HuffmanNode
 	public int	 	   	getCount() 	{ return count; }
 	public HuffmanNode 	getLeft() 	{ return left; }
 	public HuffmanNode 	getRight() 	{ return right; }
+}
+
+class ParseThread implements Runnable
+{
+	private Map<Character, Integer> dictionary;
+	private String partition;
+	
+	public ParseThread( Map<Character, Integer> dictionary, String partition )
+	{
+		this.dictionary = dictionary;
+		this.partition = partition;
+	}
+	
+	public void run()
+	{
+		for ( int i = 0; i < partition.length(); i++ )
+		{
+			synchronized ( dictionary )
+			{
+				// Add or increment table values
+				dictionary.merge( partition.charAt( i ), 1, Integer::sum );
+			}
+		}
+	}
 }
