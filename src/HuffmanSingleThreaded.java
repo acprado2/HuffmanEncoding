@@ -5,8 +5,11 @@
 //-----------------------------------------------------------------------------
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Queue;
@@ -19,21 +22,15 @@ public class HuffmanSingleThreaded
 	{	
 		long startTime = System.nanoTime();	// Time tree building
 	
-		Map<String, Integer> dict = new HashMap<>();
+		Map<Character, Integer> dict = new HashMap<>();
 		String currentLine = new String();
 		BufferedReader br = new BufferedReader( new FileReader( "const.txt" ) );	
 		while ( ( currentLine = br.readLine() ) != null )
 		{
-			// Delimiter
-			String words[] = currentLine.split( " " );
-			
-			for ( int i = 0; i < words.length; i++ )
+			for ( int i = 0; i < currentLine.length(); i++ )
 			{
-				if ( !words[i].isEmpty() )
-				{
 					// Add or increment table values
-					dict.merge( words[i], 1, Integer::sum );
-				}
+					dict.merge( currentLine.charAt( i ), 1, Integer::sum );
 			}
 		}
 		br.close();
@@ -56,12 +53,9 @@ public class HuffmanSingleThreaded
 		
 		while ( ( currentLine = br.readLine() ) != null )
 		{
-			// Delimiter
-			String words[] = currentLine.split( " " );
-			
-			for ( int i = 0; i < words.length; i++ )
-			{			
-				String code = tree.getCode( words[i] );
+			for ( int i = 0; i < currentLine.length(); i++ )
+			{	
+				String code = tree.getCode( currentLine.charAt( i ) );
 				if ( code != null )
 				{
 					for ( int j = 0; j < code.length(); j++ )
@@ -96,13 +90,15 @@ public class HuffmanSingleThreaded
 		// Print compression
 		System.out.println( "Encoded file is " + ( 100 - ( ( 100 / ( double ) fileSize ) * ( double ) f.length() ) ) + " More compressed" );
 		
+		tree.StoreCodeTable();
+		
 		System.exit( 0 );
 	}
 }
 
 class HuffmanTree
 {
-	private Map<String, String> huffmanCodes; // Words map to codes
+	private Map<Character, String> huffmanCodes; // Words map to codes
 	private HuffmanNode root; // root node
 	
 	public HuffmanTree()
@@ -111,9 +107,33 @@ class HuffmanTree
 	}
 	
 	// Get codes
-	public String getCode( String word )
+	public String getCode( Character word )
 	{
 		return huffmanCodes.get( word );
+	}
+	
+	public void StoreCodeTable() throws IOException
+	{
+		BufferedWriter bw = new BufferedWriter( new FileWriter( "const_codetable.txt" ) );
+		
+		// Store code table
+		huffmanCodes.forEach( ( k, v ) -> 
+		{
+			try 
+			{
+				bw.write( k );
+				bw.newLine();
+				bw.write( v );
+				bw.newLine();
+			} 
+			catch ( IOException e ) 
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} );
+		
+		bw.close();
 	}
 	
 	// Create our code table
@@ -129,7 +149,7 @@ class HuffmanTree
 		{
 			inOrder( current.getLeft(), code + "0" );
 			
-			if ( !current.getWord().isEmpty() )
+			if ( current.getWord() != '\0' )
 			{
 				huffmanCodes.put( current.getWord(), code );
 			}
@@ -139,7 +159,7 @@ class HuffmanTree
 	}
 	
 	// Convert hashmap to tree structure
-	public void CreateTree( Map<String, Integer> dictionary )
+	public void CreateTree( Map<Character, Integer> dictionary )
 	{
 		// Sorting 
 		// Lambda expression sorts nodes in ascending order (min. to max.)
@@ -168,7 +188,7 @@ class HuffmanTree
 
 class HuffmanNode
 {
-	private String 		word;
+	private Character 	word;
 	private int 		count;
 	private HuffmanNode left;
 	private HuffmanNode right;
@@ -176,14 +196,14 @@ class HuffmanNode
 	// Merge constructor
 	public HuffmanNode( HuffmanNode left, HuffmanNode right, int count )
 	{
-		this.word = "";
+		this.word = '\0';
 		this.count = count;
 		this.left = left;
 		this.right = right;
 	}
 	
 	// Dictionary constructor
-	public HuffmanNode( String word, int count )
+	public HuffmanNode( Character word, int count )
 	{
 		this.word = word;
 		this.count = count;
@@ -191,12 +211,12 @@ class HuffmanNode
 		this.right = null;
 	}
 	
-	public void			setWord( String word ) 			{ this.word = word; }
+	public void			setWord( Character word ) 			{ this.word = word; }
 	public void			setCount( int count ) 			{ this.count = count; }
 	public void			setLeft( HuffmanNode left ) 	{ this.left = left; }
 	public void			setRight( HuffmanNode right ) 	{ this.right = right; }
 
-	public String 		getWord() 	{ return word; }
+	public Character 		getWord() 	{ return word; }
 	public int	 	   	getCount() 	{ return count; }
 	public HuffmanNode 	getLeft() 	{ return left; }
 	public HuffmanNode 	getRight() 	{ return right; }
